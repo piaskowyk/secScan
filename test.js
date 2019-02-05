@@ -1,7 +1,10 @@
 var webPage = require('webpage');
 const fs = require('fs');
 
-var baseUrl = "http://slopnice.pl/pl/790/0/wyszukiwarka.html?q=";
+var config = {
+    baseUrl: "http://slopnice.pl/pl/790/0/wyszukiwarka.html?q=",
+    findOnlyOne: false
+}
 
 //-------------------------------------------------------------------------------
 
@@ -21,43 +24,50 @@ payloads.forEach(function (payloadItem, index) {
     var detectXss = false;
     start++;
 
-    page.open(baseUrl + payloadItem, function (status) {
+    page.open(config.baseUrl + payloadItem, function (status) {
         if (status == "success") {
             console.log("Test payload no: " + index + " is end");
         }
         else {
-            messegeQueue.push("Unrecognise bahavior. Payload index = " + index + "\n" + baseUrl + payloadItem);
-            console.log("Unrecognise bahavior. Payload index = " + index + "\n" + baseUrl + payloadItem);
+            messegeQueue.push("Unrecognise bahavior. Payload index = " + index + "\n" + config.baseUrl + payloadItem + "\nMore info:\n" + status);
+            console.log("Unrecognise bahavior. Payload index = " + index + "\n" + config.baseUrl + payloadItem);
         }
         end++;
 
-        runAfter();
+        joinTheard();
     });
 
     page.onAlert = function (msg) {
         if (!detectXss) {
             detectXss = true;
-            messegeQueue.push("Detect XSS on test payload index: " + index + "\n" + baseUrl + payloadItem);
-            console.log("Detect XSS on test payload index: " + index + "\n" + baseUrl + payloadItem);
+            messegeQueue.push("Detect XSS on test payload index: " + index + "\n" + config.baseUrl + payloadItem);
+            console.log("Detect XSS on test payload index: " + index + "\n" + config.baseUrl + payloadItem);
+            if(config.findOnlyOne){
+                endProgram();
+            }
         }
     };
 });
 
-function runAfter() {
+function joinTheard() {
     if (start == end) {
-        var raport = "";
-        console.log("\nResults:\n-------------------------------------------------------\n");
-        messegeQueue.reverse().forEach(function (message) {
-            console.log(message + "\n");
-            raport = raport + message + "\n\n";
-        });
-        console.log("-------------------------------------------------------");
-        console.log("Test is end.");
-
-        fs.write("raport.txt", raport, 'w');
-
-        phantom.exit();
+        endProgram();
     }
+}
+
+function endProgram(){
+    var raport = "";
+    console.log("\nResults:\n-------------------------------------------------------\n");
+    messegeQueue.reverse().forEach(function (message) {
+        console.log(message + "\n");
+        raport = raport + message + "\n\n";
+    });
+    console.log("-------------------------------------------------------");
+    console.log("Test is end.");
+
+    fs.write("raport.txt", raport, 'w');
+
+    phantom.exit();
 }
 
 //----------------------------------------
